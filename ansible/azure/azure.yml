@@ -1,0 +1,52 @@
+- hosts: localhost
+  collections:
+    - amazon.aws
+    - community.aws
+  tasks:
+    - name: Create resource group
+      azure_rm_resourcegroup:
+        name: "example_resource_group"
+        location: "northeurope"
+
+    - name: create example virtual network
+      azure_rm_virtualnetwork:
+        resource_group: "example_resource_group"
+        name: example_vnet
+        address_prefixes_cidr: "10.0.0.0/16"
+
+    - name: create example subnet
+      azure_rm_subnet:
+        resource_group: "example_resource_group"
+        name: "example_subnet"
+        address_prefix: "10.0.0.0/24"
+        virtual_network: example_vnet
+
+    - name: Create network interface 
+      azure_rm_networkinterface:
+        name: "example_nic"
+        resource_group: "example_resource_group"
+        virtual_network: example_vnet
+        subnet_name: "example_subnet"
+        ip_configurations:
+          - name: exampleserver
+            private_ip_allocation_method: Dynamic
+
+    - name: Create example VM 
+      azure_rm_virtualmachine:
+        resource_group: "example_resource_group"
+        name: example_vm
+        admin_username: testadmin
+        vm_size: "Standard_DS1_v2"
+        network_interface_names: 
+          - example_nic
+        os_disk_name: example-disk
+        os_disk_caching: ReadWrite
+        managed_disk_type: Standard_LRS
+        ssh_password_enabled: true
+        admin_password: Password1234!
+        short_hostname: example-vm
+        image:
+          offer: UbuntuServer
+          publisher: "Canonical"
+          sku: "18.04-LTS"
+          version: latest

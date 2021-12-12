@@ -1,0 +1,32 @@
+- hosts: localhost
+  connection: local
+  collections:
+    - amazon.aws
+    - community.aws
+  vars:
+    default_region: eu-west-1
+  tasks:
+    - name: create example vpc
+      amazon.aws.ec2_vpc_net:
+        name: example_vpc
+        cidr_block: "10.0.0.0/16"
+        region: "{{ default_region }}"
+        state: present
+      register: example_vpc
+
+    - name: create example subnet
+      amazon.aws.ec2_vpc_subnet:
+        vpc_id: "{{ example_vpc.vpc.id }}"
+        cidr: "10.0.0.0/24"
+        az: "eu-west-1a"
+      register: example_subnet
+
+    - name: create sample server
+      community.aws.ec2_instance:
+        name: "example_server"
+        region: "{{ default_region }}"
+        instance_type: "t1.micro"
+        image_id: ami-24506250
+        vpc_subnet_id: "{{ example_subnet.subnet.id }}"
+        state: running
+    
